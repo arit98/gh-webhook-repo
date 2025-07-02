@@ -5,96 +5,96 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GitHub Events Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .event-enter {
+        .event-card {
+            transition: all 0.3s ease;
             opacity: 0;
-            transform: translateY(-10px);
+            transform: translateY(10px);
         }
-        .event-enter-active {
+        .event-visible {
             opacity: 1;
             transform: translateY(0);
-            transition: all 0.3s ease;
         }
-        .animate-pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        .blink {
+            animation: blink 1.5s infinite;
         }
-        @keyframes pulse {
+        @keyframes blink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-50">
     <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div class="flex justify-between items-center mb-8">
             <div>
                 <h1 class="text-3xl font-bold text-gray-800">
-                    <i class="fab fa-github mr-2"></i> GitHub Events Dashboard
+                    <i class="fab fa-github mr-2"></i> GitHub Events Monitor
                 </h1>
-                <p class="text-gray-600 mt-1">Real-time activity monitor for github remo webhook testing</p>
+                <p class="text-gray-600">Real-time activity dashboard</p>
             </div>
-            <div class="flex items-center gap-4">
-                <div class="bg-white px-4 py-2 rounded-lg shadow-sm">
+            <div class="flex items-center space-x-4">
+                <div class="bg-white px-4 py-2 rounded-lg shadow">
                     <div class="text-sm text-gray-500">Total Events</div>
-                    <div id="eventCount" class="text-2xl font-bold text-blue-600">0</div>
+                    <div id="eventCount" class="text-xl font-bold">0</div>
                 </div>
-                <button id="refreshBtn" class="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-800 px-4 py-2 rounded-lg shadow-sm transition">
-                    <i class="fas fa-sync-alt"></i>
-                    <span class="hidden md:inline">Refresh</span>
+                <button id="refreshBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-sync-alt mr-2"></i> Refresh
                 </button>
             </div>
         </div>
 
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
-                <div class="flex justify-between items-center">
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-xl font-semibold">Recent Activity</h2>
+                <div class="text-sm text-gray-500" id="lastUpdated">
+                    <i class="fas fa-circle text-green-500 mr-1"></i> Connected
+                </div>
+            </div>
+            
+            <div id="eventsContainer" class="divide-y divide-gray-100">
+                <div class="p-8 text-center text-gray-400">
+                    <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                    <p>Waiting for GitHub events...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white p-4 rounded-lg shadow">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
+                        <i class="fas fa-code-commit fa-lg"></i>
+                    </div>
                     <div>
                         <div class="text-sm text-gray-500">Push Events</div>
                         <div id="pushCount" class="text-2xl font-bold">0</div>
                     </div>
-                    <i class="fas fa-code-commit text-blue-500 text-xl"></i>
                 </div>
             </div>
-            <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-purple-500">
-                <div class="flex justify-between items-center">
+            <div class="bg-white p-4 rounded-lg shadow">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
+                        <i class="fas fa-code-pull-request fa-lg"></i>
+                    </div>
                     <div>
                         <div class="text-sm text-gray-500">Pull Requests</div>
                         <div id="prCount" class="text-2xl font-bold">0</div>
                     </div>
-                    <i class="fas fa-code-pull-request text-purple-500 text-xl"></i>
                 </div>
             </div>
-            <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-green-500">
-                <div class="flex justify-between items-center">
+            <div class="bg-white p-4 rounded-lg shadow">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+                        <i class="fas fa-code-merge fa-lg"></i>
+                    </div>
                     <div>
                         <div class="text-sm text-gray-500">Merges</div>
                         <div id="mergeCount" class="text-2xl font-bold">0</div>
                     </div>
-                    <i class="fas fa-code-merge text-green-500 text-xl"></i>
                 </div>
             </div>
-        </div>
-
-        <!-- Events Feed -->
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
-                <h2 class="text-xl font-semibold text-gray-700">Recent Activity</h2>
-                <div class="text-sm text-gray-500" id="lastUpdated">Just now</div>
-            </div>
-            
-            <div id="eventsContainer" class="divide-y divide-gray-200">
-                <div class="p-4 text-center text-gray-500">
-                    <i class="fas fa-spinner fa-spin mr-2"></i> Loading events...
-                </div>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="mt-8 text-center text-sm text-gray-500">
-            <p>Auto-refreshing every 15 seconds. Click refresh button for immediate update.</p>
         </div>
     </div>
 
@@ -108,68 +108,74 @@
         const refreshBtn = document.getElementById('refreshBtn');
         const lastUpdated = document.getElementById('lastUpdated');
 
-        // Format timestamp
-        function formatTime(date) {
-            return new Date(date).toLocaleTimeString();
-        }
+        // Event type configuration
+        const eventConfig = {
+            'push': { icon: 'code-commit', color: 'blue' },
+            'pull_request': { icon: 'code-pull-request', color: 'purple' },
+            'merge': { icon: 'code-merge', color: 'green' }
+        };
 
-        // Format event message
-        function formatEventMessage(event) {
-            switch(event.type) {
-                case 'push':
-                    return `<span class="font-semibold">${event.author}</span> pushed to <span class="font-mono bg-gray-100 px-1 rounded">${event.to_branch}</span>`;
-                case 'pull_request':
-                    return `<span class="font-semibold">${event.author}</span> submitted a PR from <span class="font-mono bg-gray-100 px-1 rounded">${event.from_branch}</span> to <span class="font-mono bg-gray-100 px-1 rounded">${event.to_branch}</span>`;
-                case 'merge':
-                    return `<span class="font-semibold">${event.author}</span> merged <span class="font-mono bg-gray-100 px-1 rounded">${event.from_branch}</span> to <span class="font-mono bg-gray-100 px-1 rounded">${event.to_branch}</span>`;
-                default:
-                    return `Unknown event type`;
+        // Fetch events from API
+        async function fetchEvents() {
+            try {
+                const response = await fetch('/api/events');
+                if (!response.ok) throw new Error('Network error');
+                const data = await response.json();
+                return data.events || [];
+            } catch (error) {
+                console.error('Fetch error:', error);
+                showError();
+                return [];
             }
         }
 
-        // Get event icon and color
-        function getEventStyle(type) {
-            const styles = {
-                'push': { icon: 'code-commit', color: 'blue' },
-                'pull_request': { icon: 'code-pull-request', color: 'purple' },
-                'merge': { icon: 'code-merge', color: 'green' }
-            };
-            return styles[type] || styles.push;
-        }
-
-        // Render events to the UI
+        // Render events to UI
         function renderEvents(events) {
             if (events.length === 0) {
                 eventsContainer.innerHTML = `
-                    <div class="p-4 text-center text-gray-500">
-                        <i class="far fa-folder-open mr-2"></i> No events found
+                    <div class="p-8 text-center text-gray-400">
+                        <i class="far fa-folder-open fa-2x mb-2"></i>
+                        <p>No events found</p>
                     </div>
                 `;
                 return;
             }
 
-            // Clear existing events
             eventsContainer.innerHTML = '';
-
+            
+            // Update counters
+            const counts = { push: 0, pull_request: 0, merge: 0 };
+            events.forEach(event => counts[event.type]++);
+            
+            eventCount.textContent = events.length;
+            pushCount.textContent = counts.push;
+            prCount.textContent = counts.pull_request;
+            mergeCount.textContent = counts.merge;
+            
             // Add events with animation
-            events.forEach(event => {
-                const style = getEventStyle(event.type);
+            events.slice().reverse().forEach((event, index) => {
+                const config = eventConfig[event.type] || eventConfig.push;
                 const eventElement = document.createElement('div');
-                eventElement.className = `event-enter p-4 hover:bg-gray-50`;
+                eventElement.className = `event-card p-4 hover:bg-gray-50`;
                 eventElement.innerHTML = `
-                    <div class="flex items-start gap-3">
+                    <div class="flex items-start">
                         <div class="flex-shrink-0 mt-1">
-                            <span class="h-8 w-8 rounded-full bg-${style.color}-100 text-${style.color}-600 flex items-center justify-center">
-                                <i class="fas fa-${style.icon} text-sm"></i>
-                            </span>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="text-sm text-gray-800">
-                                ${formatEventMessage(event)}
+                            <div class="h-10 w-10 rounded-full bg-${config.color}-100 text-${config.color}-600 flex items-center justify-center">
+                                <i class="fas fa-${config.icon}"></i>
                             </div>
-                            <div class="text-xs text-gray-500 mt-1 flex items-center gap-2">
-                                <span><i class="far fa-clock mr-1"></i> ${event.timestamp}</span>
-                                <span class="px-2 py-0.5 bg-gray-100 rounded-full text-xs capitalize">${event.type.replace('_', ' ')}</span>
+                        </div>
+                        <div class="ml-4 flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">
+                                ${event.message}
+                            </p>
+                            <div class="flex items-center mt-1 text-xs text-gray-500">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-${config.color}-100 text-${config.color}-800 capitalize">
+                                    ${event.type.replace('_', ' ')}
+                                </span>
+                                <span class="ml-2">
+                                    <i class="far fa-clock mr-1"></i>
+                                    ${new Date(event.timestamp).toLocaleString()}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -177,53 +183,47 @@
                 
                 eventsContainer.prepend(eventElement);
                 setTimeout(() => {
-                    eventElement.classList.add('event-enter-active');
-                }, 10);
+                    eventElement.classList.add('event-visible');
+                }, index * 50);
             });
         }
 
-        // Update statistics
-        function updateStats(counts) {
-            eventCount.textContent = counts.total;
-            pushCount.textContent = counts.push;
-            prCount.textContent = counts.pull_request;
-            mergeCount.textContent = counts.merge;
-            lastUpdated.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+        // Show error state
+        function showError() {
+            eventsContainer.innerHTML = `
+                <div class="p-8 text-center text-red-500">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                    <p>Failed to load events</p>
+                </div>
+            `;
+            lastUpdated.innerHTML = '<i class="fas fa-circle text-red-500 mr-1"></i> Connection error';
         }
 
-        // Fetch data from API
-        async function fetchData() {
+        // Refresh data
+        async function refreshData() {
+            lastUpdated.innerHTML = '<i class="fas fa-circle text-yellow-500 mr-1 blink"></i> Updating...';
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Refreshing';
+            
             try {
-                const response = await fetch('/api/events');
-                if (!response.ok) throw new Error('Network error');
-                const data = await response.json();
-                renderEvents(data.events);
-                updateStats(data.counts);
+                const events = await fetchEvents();
+                renderEvents(events);
+                lastUpdated.innerHTML = `<i class="fas fa-circle text-green-500 mr-1"></i> Updated ${new Date().toLocaleTimeString()}`;
             } catch (error) {
-                console.error('Error fetching data:', error);
-                eventsContainer.innerHTML = `
-                    <div class="p-4 text-center text-red-500">
-                        <i class="fas fa-exclamation-triangle mr-2"></i> Failed to load events
-                    </div>
-                `;
+                showError();
+            } finally {
+                refreshBtn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Refresh';
             }
         }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            // Initial load
-            fetchData();
+            refreshData();
             
             // Auto-refresh every 15 seconds
-            setInterval(fetchData, 15000);
+            setInterval(refreshData, 15000);
             
             // Manual refresh
-            refreshBtn.addEventListener('click', () => {
-                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                fetchData().finally(() => {
-                    refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i><span class="hidden md:inline">Refresh</span>';
-                });
-            });
+            refreshBtn.addEventListener('click', refreshData);
         });
     </script>
 </body>
